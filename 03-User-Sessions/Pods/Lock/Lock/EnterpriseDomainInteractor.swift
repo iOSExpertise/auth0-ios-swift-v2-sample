@@ -25,40 +25,50 @@ import Auth0
 
 struct EnterpriseDomainInteractor: HRDAuthenticatable {
 
-    var email: String? = nil
-    var validEmail: Bool = false
-    var connection: EnterpriseConnection? = nil
+    var email: String? {
+        return self.user.email
+    }
 
+    var validEmail: Bool {
+        return self.user.validEmail
+    }
+
+    var connection: EnterpriseConnection? = nil
+    var domain: String? = nil
+
+    let user: User
     let connections: [EnterpriseConnection]
     let emailValidator: InputValidator = EmailValidator()
     let authenticator: OAuth2Authenticatable
 
-    init(connections: Connections, authentication: OAuth2Authenticatable) {
+    init(connections: Connections, user: User, authentication: OAuth2Authenticatable) {
         self.connections = connections.enterprise
         self.authenticator = authentication
 
-        // Single Enterprise, defaulting connection
         if self.connections.count == 1 && connections.oauth2.isEmpty && connections.database == nil {
             self.connection = self.connections.first
         }
+        self.user = user
     }
 
-    func matchDomain(_ value: String?) -> EnterpriseConnection? {
-        guard let domain = value?.components(separatedBy: "@").last else { return nil }
+    func match(domain: String) -> EnterpriseConnection? {
         return connections.filter { $0.domains.contains(domain) }.first
     }
 
     mutating func updateEmail(_ value: String?) throws {
-        validEmail = false
-        connection = nil
-
-        email = value?.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        if let error = emailValidator.validate(value) {
+        self.connection = nil
+        self.user.email = value?.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        let error = emailValidator.validate(self.email)
+        self.user.validEmail = error == nil
+        if let error = error {
             throw error
         }
-        validEmail = true
 
-        connection = matchDomain(value)
+        self.connection = nil
+        if let domain = value?.components(separatedBy: "@").last {
+            self.connection = match(domain: domain)
+            self.domain = domain
+        }
     }
 
     func login(_ callback: @escaping (OAuth2AuthenticatableError?) -> ()) {

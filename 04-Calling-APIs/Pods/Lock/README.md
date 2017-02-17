@@ -1,9 +1,9 @@
-# Lock.swift (BETA)
+# Lock.swift
 
-[![Build Status](https://travis-ci.org/auth0/Lock.iOS-OSX.svg?branch=v2)](https://travis-ci.org/auth0/Lock.iOS-OSX)
-[![Version](https://img.shields.io/cocoapods/v/Lock.svg?style=flat)](http://cocoadocs.org/docsets/Lock)
-[![License](https://img.shields.io/cocoapods/l/Lock.svg?style=flat)](http://cocoadocs.org/docsets/Lock)
-[![Platform](https://img.shields.io/cocoapods/p/Lock.svg?style=flat)](http://cocoadocs.org/docsets/Lock)
+[![CircleCI](https://img.shields.io/circleci/project/github/auth0/Lock.swift.svg?style=flat-square)](https://circleci.com/gh/auth0/Lock.swift/tree/master)
+[![Version](https://img.shields.io/cocoapods/v/Lock.svg?style=flat-square)](http://cocoadocs.org/docsets/Lock)
+[![License](https://img.shields.io/cocoapods/l/Lock.svg?style=flat-square)](http://cocoadocs.org/docsets/Lock)
+[![Platform](https://img.shields.io/cocoapods/p/Lock.svg?style=flat-square)](http://cocoadocs.org/docsets/Lock)
 
 [Auth0](https://auth0.com) is an authentication broker that supports social identity providers as well as enterprise identity providers such as Active Directory, LDAP, Google Apps and Salesforce.
 
@@ -13,6 +13,8 @@ Lock makes it easy to integrate SSO in your app. You won't have to worry about:
 * Finding the right icons for popular social providers.
 * Solving the home realm discovery challenge with enterprise users (i.e.: asking the enterprise user the email, and redirecting to the right enterprise identity provider).
 * Implementing a standard sign in protocol (OpenID Connect / OAuth2 Login)
+
+Need help migrating from v1? Please check our [Migration Guide](MIGRATION.md)
 
 ## Requirements
 
@@ -27,7 +29,7 @@ Lock makes it easy to integrate SSO in your app. You won't have to worry about:
  Add the following line to your Podfile:
 
  ```ruby
- pod "Lock", "~> 2.0.0-rc.1"
+ pod "Lock", "~> 2.0.0"
  ```
 
 ### Carthage
@@ -35,7 +37,7 @@ Lock makes it easy to integrate SSO in your app. You won't have to worry about:
 In your `Cartfile` add
 
 ```
-github "auth0/Lock.iOS-OSX" "2.0.0-rc.1"
+github "auth0/Lock.swift" "2.0.0"
 ```
 
 ## Usage
@@ -274,17 +276,19 @@ When signing up the default information requirements are the user's *email* and 
 }
 ```
 
-*Note: You must specify the icon to use with your custom text field.*
+*Note: You must specify the icon to use with your custom text field and store it in your App's bundle.*
 
 #### Enterprise
 
 * *enterpriseConnectionUsingActiveAuth*: By default Enterprise connections will use Web Authentication. However you can specify which connections will alternatively use credential authentication and prompt for a username and password.
-* *activeDirectoryEmailAsUsername*: When in credential authentication mode, should the user require their email as an identifier.  The default is `false`, use **Username**.
+* *activeDirectoryEmailAsUsername*: When Lock request your enterprise credentials after performing Home Realm Discovery (HRD), e.g. for Active Directory, it will try to prefill the username for you. By default it will parse the email's local part and use that as the username, e.g. `john.doe@auth0.com` will be `john.doe`. If you don't want that you can turn on this flag and it will just use the email address.
 
+```swift
 .withOptions {
   $0.activeDirectoryEmailAsUsername = true
   $0.enterpriseConnectionUsingActiveAuth = ["enterprisedomain.com"]
 }
+```
 
 ## What is Auth0?
 

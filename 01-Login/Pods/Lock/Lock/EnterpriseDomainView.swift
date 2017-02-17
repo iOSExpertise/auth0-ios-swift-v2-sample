@@ -35,7 +35,7 @@ class EnterpriseDomainView: UIView, View {
         let primaryButton = PrimaryButton()
         let domainView = EnterpriseSingleInputView()
         let container = UIStackView()
-        let ssoBar = InfoBarView()
+        let ssoBar = InfoBarView.ssoInfoBar
 
         self.primaryButton = primaryButton
         self.form = domainView
@@ -47,8 +47,6 @@ class EnterpriseDomainView: UIView, View {
         self.addSubview(container)
         self.addSubview(primaryButton)
 
-        ssoBar.title = "SINGLE SIGN-ON ENABLED".i18n(key: "com.auth0.lock.enterprise.sso", comment: "SSO Header")
-        ssoBar.setIcon("ic_lock")
         ssoBar.isHidden = true
         self.ssoBar = ssoBar
         container.alignment = .fill
@@ -145,9 +143,9 @@ private func strutView(withHeight height: CGFloat = 50) -> UIView {
     return view
 }
 
-public class EnterpriseSingleInputView : SingleInputView {
+class EnterpriseSingleInputView: SingleInputView {
 
-    public override var intrinsicContentSize : CGSize {
+    public override var intrinsicContentSize: CGSize {
         return CGSize(width: UIViewNoIntrinsicMetric, height: 50)
     }
 }

@@ -1,6 +1,6 @@
-# Calling APIs 
+# Calling APIs
 
-- [Full Tutorial](https://auth0.com/docs/quickstart/native/ios-swift/08-calling-apis)
+- [Full Tutorial](https://auth0.com/docs/quickstart/native/ios-swift/04-calling-apis)
 
 The idea of this project is to perform authenticated requests by attaching the `idToken`, obtained upon login, into an authorization header.
 
@@ -18,22 +18,24 @@ Look at `ProfileViewController.swift`:
 
 ```swift
 private func callAPI(authenticated shouldAuthenticate: Bool) {
-    let url = NSURL(string: "your api url")!
-    let request = NSMutableURLRequest(URL: url)
+    let url = URL(string: "your api url")!
+    var request = URLRequest(url: url)
     // Configure your request here (method, body, etc)
     if shouldAuthenticate {
-        let token = SessionManager().storedSession!.token.idToken
+        guard let token = A0SimpleKeychain(service: "Auth0").string(forKey: "idToken") else {
+            return
+        }
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
-    let task = NSURLSession.sharedSession().dataTaskWithRequest(request) { data, response, error in
-        dispatch_async(dispatch_get_main_queue()) {
+    let task = URLSession.shared.dataTask(with: request, completionHandler: { data, response, error in
+        DispatchQueue.main.async {
             let title = "Results"
-            let message = "Error: \(String(error))\n\nData: \(data == nil ? "nil" : "(there is data)")\n\nResponse: \(String(response))"
+            let message = "Error: \(error?.localizedDescription)\n\nData: \(data == nil ? "nil" : "(there is data)")\n\nResponse: \(response?.description)"
             let alert = UIAlertController.alertWithTitle(title, message: message, includeDoneButton: true)
-            self.presentViewController(alert, animated: true, completion: nil)
-            
+            self.present(alert, animated: true, completion: nil)
+
         }
-    }
+    })
     task.resume()
 }
 ```
@@ -43,7 +45,7 @@ These are the specific lines of code that you have to configure:
 First, set your API url here:
 
 ```swift
-let url = NSURL(string: "your api url")!
+let url = URL(string: "your api url")!
 ```
 
 Then, add any extra configuration that your API might require for your requests:
@@ -63,7 +65,9 @@ That string interpolation might vary depending on the standards that your API fo
 Also, this line is important:
 
 ```swift
-let token = SessionManager().storedSession!.token.idToken
+guard let token = A0SimpleKeychain(service: "Auth0").string(forKey: "idToken") else {
+    return
+}
 ```
 
 That specifies that the `idToken` is the token that you're using for authentication. You might want to choose using a different one (for example, the `accessToken`), it depends on how your API checks the authentication against Auth0.

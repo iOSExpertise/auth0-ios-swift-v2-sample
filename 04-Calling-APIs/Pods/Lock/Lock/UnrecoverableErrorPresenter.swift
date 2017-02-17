@@ -1,4 +1,4 @@
-// EnterpriseDomain.swift
+// UnrecoverableErrorPresenter.swift
 //
 // Copyright (c) 2016 Auth0 (http://auth0.com)
 //
@@ -22,11 +22,22 @@
 
 import Foundation
 
-protocol HRDAuthenticatable {
-    var email: String? { get }
-    var validEmail: Bool { get }
+class UnrecoverableErrorPresenter: Presentable, Loggable {
+    let navigator: Navigable
+    let error: UnrecoverableError
 
-    mutating func updateEmail(_ value: String?) throws
+    var messagePresenter: MessagePresenter?
 
-    func login(_ callback: @escaping (OAuth2AuthenticatableError?) -> ())
+    init(error: UnrecoverableError, navigator: Navigable) {
+        self.navigator = navigator
+        self.error = error
+    }
+
+    var view: View {
+        let view = UnrecoverableErrorView(message: self.error.localizableMessage)
+        view.primaryButton?.onPress = { _ in
+            self.navigator.navigate(.root)
+        }
+        return view
+    }
 }

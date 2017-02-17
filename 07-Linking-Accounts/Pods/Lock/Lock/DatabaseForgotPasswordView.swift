@@ -27,7 +27,7 @@ class DatabaseForgotPasswordView: UIView, View {
     weak var form: Form?
     weak var primaryButton: PrimaryButton?
 
-    init(email: String?, options: Options) {
+    init(email: String?) {
         let primaryButton = PrimaryButton()
         let forgotView = SingleInputView()
         let center = UILayoutGuide()
@@ -57,7 +57,7 @@ class DatabaseForgotPasswordView: UIView, View {
         constraintEqual(anchor: primaryButton.bottomAnchor, toAnchor: self.bottomAnchor)
         primaryButton.translatesAutoresizingMaskIntoConstraints = false
 
-        primaryButton.title = "Send Email".i18n(key: "com.auth0.lock.submit.send-email.title", comment: "Send Email button title")
+        primaryButton.title = "SEND EMAIL".i18n(key: "com.auth0.lock.submit.send_email.title", comment: "Send Email button title")
         forgotView.type = .email
         forgotView.returnKey = .done
         forgotView.message = "Please enter your email and the new password. We will send you an email to confirm the password change.".i18n(key: "com.auth0.lock.forgot.message", comment: "Forgot Password message")

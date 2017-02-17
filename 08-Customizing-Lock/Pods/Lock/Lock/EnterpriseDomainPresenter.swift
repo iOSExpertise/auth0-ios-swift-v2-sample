@@ -25,17 +25,12 @@ import Foundation
 class EnterpriseDomainPresenter: Presentable, Loggable {
 
     var interactor: EnterpriseDomainInteractor
-    var customLogger: Logger?
-    var user: User
     var options: Options
-
-    // Social connections
     var authPresenter: AuthPresenter?
 
-    init(interactor: EnterpriseDomainInteractor, navigator: Navigable, user: User, options: Options) {
+    init(interactor: EnterpriseDomainInteractor, navigator: Navigable, options: Options) {
         self.interactor = interactor
         self.navigator = navigator
-        self.user = user
         self.options = options
     }
 
@@ -45,24 +40,6 @@ class EnterpriseDomainPresenter: Presentable, Loggable {
     var view: View {
         let email = self.interactor.validEmail ? self.interactor.email : nil
         let authCollectionView = self.authPresenter?.newViewToEmbed(withInsets: UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0), isLogin: true)
-
-        // Single Enterprise Domain
-        if let enterpriseButton = EnterpriseButton(forConnections: interactor.connections, customStyle: [:], isLogin: true, onAction: {
-            self.interactor.login { error in
-                Queue.main.async {
-                    if let error = error {
-                        self.messagePresenter?.showError(error)
-                        self.logger.error("Enterprise connection failed: \(error)")
-                    } else {
-                        self.logger.debug("Enterprise authenticator launched")
-                    }
-                }
-
-        }}) {
-            let view = EnterpriseDomainView(authButton: enterpriseButton, authCollectionView: authCollectionView)
-            return view
-        }
-
         let view = EnterpriseDomainView(email: email, authCollectionView: authCollectionView)
         let form = view.form
 
@@ -74,7 +51,6 @@ class EnterpriseDomainPresenter: Presentable, Loggable {
             guard case .email = input.type else { return }
             do {
                 try self.interactor.updateEmail(input.text)
-                self.user.email = self.interactor.email
                 input.showValid()
                 if let connection = self.interactor.connection {
                     self.logger.debug("Enterprise connection match: \(connection)")
@@ -86,9 +62,8 @@ class EnterpriseDomainPresenter: Presentable, Loggable {
         }
 
         let action = { [weak form] (button: PrimaryButton) in
-            // Check for credential auth
-            if let connection = self.interactor.connection, self.options.enterpriseConnectionUsingActiveAuth.contains(connection.name) {
-                guard self.navigator?.navigate(.enterpriseActiveAuth(connection: connection)) == nil else { return }
+            if let connection = self.interactor.connection, let domain = self.interactor.domain, self.options.enterpriseConnectionUsingActiveAuth.contains(connection.name) {
+                guard self.navigator?.navigate(.enterpriseActiveAuth(connection: connection, domain: domain)) == nil else { return }
             }
 
             self.messagePresenter?.hideCurrent()
@@ -106,9 +81,7 @@ class EnterpriseDomainPresenter: Presentable, Loggable {
                         self.logger.debug("Enterprise authenticator launched")
                     }
                 }
-
             }
-
         }
 
         view.primaryButton?.onPress = action
@@ -119,20 +92,4 @@ class EnterpriseDomainPresenter: Presentable, Loggable {
 
         return view
     }
-
-}
-
-func EnterpriseButton(forConnections connections: [EnterpriseConnection], customStyle: [String: AuthStyle], isLogin login: Bool, onAction: @escaping () -> () ) -> AuthButton? {
-    guard let connection = connections.first, connections.count == 1 else { return nil }
-    let style = customStyle[connection.name] ?? connection.style
-    let button = AuthButton(size: .big)
-    button.title = style.localizedLoginTitle.uppercased()
-    button.normalColor = style.normalColor
-    button.highlightedColor = style.highlightedColor
-    button.titleColor = style.foregroundColor
-    button.icon = style.image.image(compatibleWithTraits: button.traitCollection)
-    button.onPress = { _ in
-        onAction()
-    }
-    return button
 }

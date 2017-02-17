@@ -35,13 +35,14 @@ class HomeViewController: UIViewController {
                 $0.oidcConformant = true
             }
             .onAuth { credentials in
-                self.showMissingProfileAlert(credentials.accessToken!)
+                guard let accessToken = credentials.accessToken else { return }
+                self.showSuccessAlert(accessToken)
             }
             .present(from: self)
     }
     
     // MARK: - Private
-    fileprivate func showMissingProfileAlert(_ accessToken: String) {
+    fileprivate func showSuccessAlert(_ accessToken: String) {
         let alert = UIAlertController(title: "Success", message: "accessToken: \(accessToken)", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         self.present(alert, animated: true, completion: nil)

@@ -22,7 +22,7 @@
 
 import UIKit
 
-public class InputField: UIView, UITextFieldDelegate {
+class InputField: UIView, UITextFieldDelegate {
 
     weak var containerView: UIView?
     weak var textField: UITextField?
@@ -77,16 +77,16 @@ public class InputField: UIView, UITextFieldDelegate {
 
     // MARK: - Initialisers
 
-    public convenience init() {
+    convenience init() {
         self.init(frame: CGRect.zero)
     }
 
-    required override public init(frame: CGRect) {
+    required override init(frame: CGRect) {
         super.init(frame: frame)
         self.layoutField()
     }
 
-    public required init?(coder aDecoder: NSCoder) {
+    required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.layoutField()
     }
@@ -183,7 +183,7 @@ public class InputField: UIView, UITextFieldDelegate {
         self.containerView?.layer.borderColor = State.valid.color.cgColor
     }
 
-    public override var intrinsicContentSize : CGSize {
+    override var intrinsicContentSize: CGSize {
         return CGSize(width: 230, height: 50)
     }
 
@@ -221,15 +221,15 @@ public class InputField: UIView, UITextFieldDelegate {
         }
     }
 
-    public func textFieldDidBeginEditing(_ textField: UITextField) {
+    func textFieldDidBeginEditing(_ textField: UITextField) {
         self.onBeginEditing(self)
     }
 
-    public func textFieldDidEndEditing(_ textField: UITextField) {
+    func textFieldDidEndEditing(_ textField: UITextField) {
         self.onEndEditing(self)
     }
 
-    public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.onReturn(self)
         if let field = self.nextField?.textField {
             Queue.main.async {
@@ -248,7 +248,7 @@ public class InputField: UIView, UITextFieldDelegate {
     }
 
     // MARK: - Types
-    public enum InputType {
+    enum InputType {
         case email
         case username
         case emailOrUsername
@@ -260,17 +260,17 @@ public class InputField: UIView, UITextFieldDelegate {
         var placeholder: String? {
             switch self {
             case .email:
-                return "Email".i18n(key: "com.auth0.lock.input.placeholder.email", comment: "Email placeholder")
+                return "Email".i18n(key: "com.auth0.lock.input.email.placeholder", comment: "Email placeholder")
             case .username:
-                return "Username".i18n(key: "com.auth0.lock.input.placeholder.username", comment: "Username placeholder")
+                return "Username".i18n(key: "com.auth0.lock.input.username.placeholder", comment: "Username placeholder")
             case .emailOrUsername:
-                return "Username/Email".i18n(key: "com.auth0.lock.input.placeholder.email-username", comment: "Username or Email placeholder")
+                return "Username/Email".i18n(key: "com.auth0.lock.input.email_username.placeholder", comment: "Username or Email placeholder")
             case .password:
-                return "Password".i18n(key: "com.auth0.lock.input.placeholder.password", comment: "Password placeholder")
+                return "Password".i18n(key: "com.auth0.lock.input.password.placeholder", comment: "Password placeholder")
             case .phone:
-                return "Phone Number".i18n(key: "com.auth0.lock.input.placeholder.phone", comment: "Phone placeholder")
+                return "Phone Number".i18n(key: "com.auth0.lock.input.phone.placeholder", comment: "Phone placeholder")
             case .oneTimePassword:
-                return "Code".i18n(key: "com.auth0.lock.input.placeholder.otp", comment: "OTP placeholder")
+                return "Code".i18n(key: "com.auth0.lock.input.otp.placeholder", comment: "OTP placeholder")
             case .custom(_, let placeholder, _, _, _, _):
                 return placeholder
             }

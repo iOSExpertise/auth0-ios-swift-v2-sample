@@ -22,7 +22,7 @@
 
 import UIKit
 
-public class SignUpView: UIView, Form {
+class SignUpView: UIView, Form {
     var emailField: InputField
     var passwordField: InputField
     var usernameField: InputField?
@@ -51,11 +51,17 @@ public class SignUpView: UIView, Form {
 
     var onReturn: (InputField) -> () {
         get {
-            return (self.stackView.arrangedSubviews.last as! InputField).onReturn
+            guard let last = self.lastField else { return {_ in } } // FIXME: Track this somehow
+            return last.onReturn
         }
         set {
-            (self.stackView.arrangedSubviews.last as! InputField).onReturn = newValue
+            guard let last = self.lastField else { return }
+            return last.onReturn = newValue
         }
+    }
+
+    var lastField: InputField? {
+        return self.stackView.arrangedSubviews.last as? InputField
     }
 
     func needsToUpdateState() {
@@ -66,7 +72,7 @@ public class SignUpView: UIView, Form {
 
     // MARK: - Initialisers
 
-    public init(additionalFields: [CustomTextField]) {
+    init(additionalFields: [CustomTextField]) {
         self.emailField = inputField(withType: .email)
         self.passwordField = inputField(withType: .password)
         var fields = [emailField, passwordField]
@@ -76,7 +82,7 @@ public class SignUpView: UIView, Form {
         self.layoutForm()
     }
 
-    required override public init(frame: CGRect) {
+    required override init(frame: CGRect) {
         self.emailField = inputField(withType: .email)
         self.passwordField = inputField(withType: .password)
         self.stackView = UIStackView(arrangedSubviews: [emailField, passwordField])
@@ -84,7 +90,7 @@ public class SignUpView: UIView, Form {
         self.layoutForm()
     }
 
-    public required init?(coder aDecoder: NSCoder) {
+    required init?(coder aDecoder: NSCoder) {
         self.emailField = inputField(withType: .email)
         self.passwordField = inputField(withType: .password)
         self.stackView = UIStackView(arrangedSubviews: [emailField, passwordField])
@@ -116,7 +122,7 @@ public class SignUpView: UIView, Form {
         email.type = .email
         password.type = .password
 
-        let fields = self.stackView.arrangedSubviews.map { $0 as! InputField }
+        let fields = self.stackView.arrangedSubviews.map { $0 as? InputField }.filter { $0 != nil }.map { $0! }
         fields.forEach { $0.returnKey = .next }
         fields.last?.returnKey = .done
     }

@@ -1,4 +1,4 @@
-# Custom Login 
+# Custom Login
 
 - [Full Tutorial](https://auth0.com/docs/quickstart/native/ios-swift/02-custom-login)
 
@@ -13,26 +13,22 @@ You'll find two important view controllers here: The `LoginViewController` and t
 In `LoginViewController.swift`:
 
 ```swift
-private func performLogin() {
+fileprivate func performLogin() {
     self.view.endEditing(true)
     self.loading = true
     Auth0
         .authentication()
-        .login(
-            usernameOrEmail: self.emailTextField.text!,
-            password: self.passwordTextField.text!,
-            connection: "Username-Password-Authentication"
-        )
+        .login(usernameOrEmail: self.emailTextField.text!, password: self.passwordTextField.text!, realm: "Username-Password-Authentication", scope: "openid profile")
         .start { result in
-            dispatch_async(dispatch_get_main_queue()) {
-                self.loading = true
+            DispatchQueue.main.async {
+                self.loading = false
                 switch result {
-                case .Success(let credentials):
+                case .success(let credentials):
                     self.loginWithCredentials(credentials)
-                case .Failure(let error):
+                case .failure(let error):
                     self.showAlertForError(error)
+                }
             }
-        }
     }
 }
 ```
@@ -46,16 +42,16 @@ So, in `LoginViewController.swift`...
 First, the segue is performed, saving the credentials to an instance variable:
 
 ```swift
-private func loginWithCredentials(credentials: Credentials) {
+fileprivate func loginWithCredentials(_ credentials: Credentials) {
     self.retrievedCredentials = credentials
-    self.performSegueWithIdentifier("ShowProfile", sender: nil)
+    self.performSegue(withIdentifier: "ShowProfile", sender: nil)
 }
 ```
-Then, the retrieved credentials are passed to the `ProfileViewController`: 
+Then, the retrieved credentials are passed to the `ProfileViewController`:
 
 ```swift
-override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-    guard let profileViewController = segue.destinationViewController as? ProfileViewController else {
+override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    guard let profileViewController = segue.destination as? ProfileViewController else {
         return
     }
     profileViewController.loginCredentials = self.retrievedCredentials!
@@ -67,27 +63,31 @@ override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
 In `ProfileViewController.swift`, once it's got the credentials:
 
 ```swift
-private func retrieveProfile() {
-    guard let idToken = loginCredentials.idToken else {
-        self.showErrorRetrievingProfileAlert()
-        self.navigationController?.popViewControllerAnimated(true)
+fileprivate func retrieveProfile() {
+    guard let accessToken = loginCredentials.accessToken else {
+        print("Error retrieving profile")
+        let _ = self.navigationController?.popViewController(animated: true)
         return
     }
     Auth0
         .authentication()
-        .tokenInfo(token: idToken)
+        .userInfo(token: accessToken)
         .start { result in
-            switch result {
-            case .Success(let profile):
-                self.welcomeLabel.text = "Welcome, \(profile.name)"
-                self.retrieveDataFromURL(profile.pictureURL) { data, response, error in
-                    dispatch_async(dispatch_get_main_queue()) {
-                        guard let data = data where error == nil else { return }
-                        self.avatarImageView.image = UIImage(data: data)
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let profile):
+                    self.welcomeLabel.text = "Welcome, \(profile.name)"
+                    let task = URLSession.shared.dataTask(with: profile.pictureURL) { (data, response, error) in
+                        guard let data = data , error == nil else { return }
+                        DispatchQueue.main.async {
+                            self.avatarImageView.image = UIImage(data: data)
+                        }
                     }
+                    task.resume()
+                    self.userMetadataTextView.text = profile.userMetadata.description
+                case .failure(let error):
+                    self.showAlertForError(error)
                 }
-            case .Failure(let error):
-                self.showAlertForError(error)
             }
     }
 }
@@ -98,7 +98,7 @@ private func retrieveProfile() {
 In `SignUpViewController.swift`:
 
 ```swift
-private func performRegister() {
+fileprivate func performRegister() {
     self.view.endEditing(true)
     self.loading = true
     Auth0
@@ -111,13 +111,13 @@ private func performRegister() {
                 "last_name": self.lastNameTextField.text!]
         )
         .start { result in
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.loading = false
                 switch result {
-                case .Success(let credentials):
+                case .success(let credentials):
                     self.retrievedCredentials = credentials
-                    self.performSegueWithIdentifier("DismissSignUp", sender: nil)
-                case .Failure(let error):
+                    self.performSegue(withIdentifier: "DismissSignUp", sender: nil)
+                case .failure(let error):
                     self.showAlertForError(error)
                 }
             }
@@ -134,10 +134,9 @@ Once someone has signed up, the `SignUpViewController` is dismissed, and the `Lo
 In `LoginViewController.swift`:
 
 ```swift
-@IBAction func unwindToLogin(segue: UIStoryboardSegueWithCompletion) {
-    guard let
-    controller = segue.sourceViewController as? SignUpViewController,
-    credentials = controller.retrievedCredentials
+@IBAction func unwindToLogin(_ segue: UIStoryboardSegueWithCompletion) {
+    guard let controller = segue.source as? SignUpViewController,
+    let credentials = controller.retrievedCredentials
     else { return  }
     segue.completion = {
         self.loginWithCredentials(credentials)
@@ -152,7 +151,7 @@ Notice how the `retrievedCredentials` mentioned in the step 4 are used here.
 In order to get credentials from a social provider, whether it's for sign in or sign up purposes, you present the user a webauth social authentication dialog by just using this snippet, which you can get from `LoginViewController.swift`:
 
 ```swift
-private func performFacebookAuthentication() {
+fileprivate func performFacebookAuthentication() {
     self.view.endEditing(true)
     self.loading = true
     Auth0
@@ -160,12 +159,12 @@ private func performFacebookAuthentication() {
         .connection("facebook")
         .scope("openid")
         .start { result in
-            dispatch_async(dispatch_get_main_queue()) {
-                self.loading = false
+            DispatchQueue.main.async {
+                self.spinner.stopAnimating()
                 switch result {
-                case .Success(let credentials):
+                case .success(let credentials):
                     self.loginWithCredentials(credentials)
-                case .Failure(let error):
+                case .failure(let error):
                     self.showAlertForError(error)
                 }
             }
@@ -174,8 +173,3 @@ private func performFacebookAuthentication() {
 ```
 
 Replace `"facebook"` with any social provider that you need (as long as it appears in [Auth0 identity providers](https://auth0.com/docs/identityproviders)).
-
-
-
-
-

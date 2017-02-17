@@ -1,8 +1,8 @@
-# Linking Accounts 
+# Linking Accounts
 
-- [Full Tutorial](https://auth0.com/docs/quickstart/native/ios-swift/05-linking-accounts)
+- [Full Tutorial](https://auth0.com/docs/quickstart/native/ios-swift/07-linking-accounts)
 
-This sample exposes how to manage accounts linking for an Auth0 user. 
+This sample exposes how to manage accounts linking for an Auth0 user.
 
 Besides the usual view controllers known from previous samples, it contains a new one: `UserIdentitiesViewController`, which contains a table view that displays every account the user has linked with his account, including the main account itself. That view controller provides functionality to edit them, so that you can link new accounts or delete linked accounts (that are not the main account).
 
@@ -17,13 +17,14 @@ Note: All these snippets are located in the `UserIdentitiesViewController.swift`
 User's identities (main account + linked accounts) can be found in the `identities` array from the `A0UserProfile` instance. However, in the sample project, the profile is refreshed from the server before displaying the identities, in order to stay updated:
 
 ```swift
-private func updateIdentities() {
+fileprivate func updateIdentities() {
     let loadingAlert = UIAlertController.loadingAlert()
     loadingAlert.presentInViewController(self)
-    SessionManager().retrieveSession { session in
+    SessionManager.shared.retrieveIdentity { error, identities in
         loadingAlert.dismiss() {
-            self.identities = session!.profile.identities as! [A0UserIdentity]
-            self.tableView.reloadSections(NSIndexSet(index: 0), withRowAnimation: .Automatic)
+            guard error == nil else { return }
+            self.identities = identities
+            self.tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
         }
     }
 }
@@ -34,46 +35,48 @@ private func updateIdentities() {
 First, the user is asked for the credentials of the account he wants to link. To accomplish that, the Lock widget is presented:
 
 ```swift
-private func showLinkAccountDialog() {
-    let controller = A0Lock.sharedLock().newLockViewController()
-    controller.closable = true
-    controller.onAuthenticationBlock = { profile, token in
-        guard let idToken = token?.idToken else {
-            self.showMissingProfileOrTokenAlert()
-            return
+fileprivate func showLinkAccountDialog() {
+    Lock
+        .classic()
+        .withOptions {
+            $0.closable = true
+            $0.oidcConformant = true
+            $0.scope = "openid profile"
         }
-        controller.dismissViewControllerAnimated(true) {
+        .onAuth { credentials in
+            guard let idToken = credentials.idToken else {
+                self.showMissingProfileOrTokenAlert()
+                return
+            }
             self.linkAccountWithIDToken(idToken)
         }
-    }
-    A0Lock.sharedLock().presentLockController(controller, fromController: self)
+        .present(from: self)
 }
 ```
 
 The obtained `idToken` from the login dialog is used later on in order to link the account:
 
 ```swift
-private func linkAccountWithIDToken(otherUserToken: String) {
+fileprivate func linkAccountWithIDToken(_ otherUserToken: String) {
     let loadingAlert = UIAlertController.loadingAlert()
     loadingAlert.presentInViewController(self)
-    SessionManager().retrieveSession { session in
-        Auth0
-            .users(token: session!.token.idToken)
-            .link(self.userId, withOtherUserToken: otherUserToken)
-            .start { result in
-                    loadingAlert.dismiss() {
-                        switch result {
-                        case .Success:
-                            let successAlert = UIAlertController.alertWithTitle(nil, message: "Successfully linked account!")
-                            successAlert.presentInViewController(self, dismissAfter: 1.0) { completion in
-                                self.updateIdentities()
-                            }
-                        case .Failure(let error):
-                            let failureAlert = UIAlertController.alertWithTitle("Error", message: String(error), includeDoneButton: true)
-                            failureAlert.presentInViewController(self)
-                        }
+    guard let idToken = SessionManager.shared.idToken else { return }
+    Auth0
+        .users(token: idToken)
+        .link(self.userId, withOtherUserToken: otherUserToken)
+        .start { result in
+            loadingAlert.dismiss() {
+                switch result {
+                case .success:
+                    let successAlert = UIAlertController.alertWithTitle(nil, message: "Successfully linked account!")
+                    successAlert.presentInViewController(self, dismissAfter: 1.0) { completion in
+                        self.updateIdentities()
+                    }
+                case .failure(let error):
+                    let failureAlert = UIAlertController.alertWithTitle("Error", message: error.localizedDescription, includeDoneButton: true)
+                    failureAlert.presentInViewController(self)
                 }
-        }
+            }
     }
 }
 ```
@@ -82,26 +85,28 @@ Notice that once the account is linked, the `updateIdentities()` function (descr
 
 ##### 3. Unlink an account
 
-In this case, the whole `A0UserIdentity` object is passed in to the function, for convenience, because it requires its `userId` as well as its `provider` value.
+In this case, the whole `Identity` object is passed in to the function, for convenience, because it requires its `userId` as well as its `provider` value.
 
 ```swift
-private func unlinkIdentity(identity: A0UserIdentity) {
+fileprivate func unlinkIdentity(_ identity: Identity) {
     let loadingAlert = UIAlertController.loadingAlert()
     loadingAlert.presentInViewController(self)
-    SessionManager().retrieveSession { session in
+    guard let idToken = SessionManager.shared.idToken else { return }
+    SessionManager.shared.retrieveProfile { error in
+        guard error == nil else { return }
         Auth0
-            .users(token: session!.token.idToken)
-            .unlink(identityId: identity.userId, provider: identity.provider, fromUserId: self.userId)
+            .users(token: idToken)
+            .unlink(identityId: identity.identifier, provider: identity.provider, fromUserId: self.userId)
             .start { result in
                 loadingAlert.dismiss() {
                     switch result {
-                    case .Success:
+                    case .success:
                         let successAlert = UIAlertController.alertWithTitle(nil, message: "Account unlinked")
                         successAlert.presentInViewController(self, dismissAfter: 1.0) { completion in
                             self.updateIdentities()
                         }
-                    case .Failure(let error):
-                        let failureAlert = UIAlertController.alertWithTitle("Error", message: String(error), includeDoneButton: true)
+                    case .failure(let error):
+                        let failureAlert = UIAlertController.alertWithTitle("Error", message: error.localizedDescription, includeDoneButton: true)
                         failureAlert.presentInViewController(self)
                     }
                 }
