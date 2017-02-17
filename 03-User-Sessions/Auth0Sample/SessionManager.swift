@@ -82,7 +82,7 @@ class SessionManager {
     }
 
     func logout() {
-        self.keychain.setString("", forKey: "access_token")
+        self.keychain.clearAll()
     }
     
 }

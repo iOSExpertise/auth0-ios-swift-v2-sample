@@ -40,7 +40,7 @@ class DatabasePresenter: Presentable, Loggable {
     var initialUsername: String? { return self.authenticator.validUsername ? self.authenticator.username : nil }
 
     weak var databaseView: DatabaseOnlyView?
-    var currentMode: DatabaseModeSwitcher.Mode?
+    var currentScreen: DatabaseScreen?
 
     convenience init(interactor: DatabaseInteractor, connection: DatabaseConnection, navigator: Navigable, options: Options) {
         self.init(authenticator: interactor, creator: interactor, connection: connection, navigator: navigator, options: options)
@@ -70,7 +70,6 @@ class DatabasePresenter: Presentable, Loggable {
             case .login:
                 self.showLogin(inView: view, identifier: self.authenticator.identifier)
             }
-            self.currentMode = switcher.selected
         }
 
         if allow.contains(.Login) && initialScreen == .login {
@@ -89,6 +88,7 @@ class DatabasePresenter: Presentable, Loggable {
         let authCollectionView = self.authPresenter?.newViewToEmbed(withInsets: UIEdgeInsets(top: 0, left: 18, bottom: 0, right: 18), isLogin: true)
         let style = self.database.requiresUsername ? self.options.usernameStyle : [.Email]
         view.showLogin(withIdentifierStyle: style, identifier: identifier, authCollectionView: authCollectionView)
+        self.currentScreen = .login
         let form = view.form
         form?.onValueChange = self.handleInput
 
@@ -102,9 +102,13 @@ class DatabasePresenter: Presentable, Loggable {
                     button.inProgress = false
                     guard let error = error else {
                         self.logger.debug("Logged in!")
+                        let message = "You have logged in successfully.".i18n(key: "com.auth0.lock.database.login.success.message", comment: "User logged in")
+                        if !self.options.autoClose {
+                            self.messagePresenter?.showSuccess(message)
+                        }
                         return
                     }
-                    if case DatabaseAuthenticatableError.multifactorRequired = error {
+                    if case CredentialAuthError.multifactorRequired = error {
                         self.navigator.navigate(.multifactor)
                     } else {
                         form?.needsToUpdateState()
@@ -114,17 +118,13 @@ class DatabasePresenter: Presentable, Loggable {
                 }
             }
 
-            // Enterprise Authentication
-            if let connection = self.enterpriseInteractor?.connection {
-                // Credential Auth
+            if let connection = self.enterpriseInteractor?.connection, let domain = self.enterpriseInteractor?.domain {
                 if self.options.enterpriseConnectionUsingActiveAuth.contains(connection.name) {
-                    self.navigator.navigate(.enterpriseActiveAuth(connection: connection))
+                    self.navigator.navigate(.enterpriseActiveAuth(connection: connection, domain: domain))
                 } else {
-                    // OAuth
                     self.enterpriseInteractor?.login(errorHandler)
                 }
             } else {
-                // Database Authentication
                 self.authenticator.login(errorHandler)
             }
 
@@ -136,7 +136,7 @@ class DatabasePresenter: Presentable, Loggable {
             action(button)
         }
         view.primaryButton?.onPress = action
-        view.secondaryButton?.title = "Don’t remember your password?".i18n(key: "com.auth0.lock.database.button.forgot-password", comment: "Forgot password")
+        view.secondaryButton?.title = "Don’t remember your password?".i18n(key: "com.auth0.lock.database.button.forgot_password", comment: "Forgot password")
         view.secondaryButton?.color = .clear
         view.secondaryButton?.onPress = { button in
             self.navigator.navigate(.forgotPassword)
@@ -148,6 +148,7 @@ class DatabasePresenter: Presentable, Loggable {
         let authCollectionView = self.authPresenter?.newViewToEmbed(withInsets: UIEdgeInsets(top: 0, left: 18, bottom: 0, right: 18), isLogin: false)
         let interactor = self.authenticator as? DatabaseInteractor
         let passwordPolicyValidator = interactor?.passwordValidator as? PasswordPolicyValidator
+        self.currentScreen = .signup
 
         view.showSignUp(withUsername: self.database.requiresUsername, username: username, email: email, authCollectionView: authCollectionView, additionalFields: self.options.customSignupFields, passwordPolicyValidator: passwordPolicyValidator)
         let form = view.form
@@ -163,10 +164,12 @@ class DatabasePresenter: Presentable, Loggable {
                     guard createError != nil || loginError != nil else {
                         if !self.options.loginAfterSignup {
                             let message = "Thanks for signing up.".i18n(key: "com.auth0.lock.database.signup.success.message", comment: "User signed up")
-                            if let databaseView = self.databaseView {
+                            if let databaseView = self.databaseView, self.options.allow.contains(.Login) {
                                 self.showLogin(inView: databaseView, identifier: self.creator.identifier)
                             }
-                            self.messagePresenter?.showSuccess(message)
+                            if self.options.allow.contains(.Login) || !self.options.autoClose {
+                                self.messagePresenter?.showSuccess(message)
+                            }
                         }
                         return
                     }
@@ -188,13 +191,13 @@ class DatabasePresenter: Presentable, Loggable {
             action(button)
         }
         view.primaryButton?.onPress = action
-        view.secondaryButton?.title = "By signing up, you agree to our terms of\n service and privacy policy".i18n(key: "com.auth0.lock.database.tos.button.title", comment: "tos & privacy")
+        view.secondaryButton?.title = "By signing up, you agree to our terms of\n service and privacy policy".i18n(key: "com.auth0.lock.database.button.tos", comment: "tos & privacy")
         view.secondaryButton?.color = UIColor ( red: 0.9333, green: 0.9333, blue: 0.9333, alpha: 1.0 )
         view.secondaryButton?.onPress = { button in
             let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-            let cancel = UIAlertAction(title: "Cancel".i18n(key: "com.auth0.lock.database.tos.sheet.cancel.title", comment: "Cancel"), style: .cancel, handler: nil)
-            let tos = UIAlertAction(title: "Terms of Service".i18n(key: "com.auth0.lock.database.tos.sheet.tos.title", comment: "ToS"), style: .default, handler: safariBuilder(forURL: self.options.termsOfServiceURL as URL, navigator: self.navigator))
-            let privacy = UIAlertAction(title: "Privacy Policy".i18n(key: "com.auth0.lock.database.tos.sheet.privacy.title", comment: "Privacy"), style: .default, handler: safariBuilder(forURL: self.options.privacyPolicyURL as URL, navigator: self.navigator))
+            let cancel = UIAlertAction(title: "Cancel".i18n(key: "com.auth0.lock.database.tos.sheet.cancel", comment: "Cancel"), style: .cancel, handler: nil)
+            let tos = UIAlertAction(title: "Terms of Service".i18n(key: "com.auth0.lock.database.tos.sheet.title", comment: "ToS"), style: .default, handler: safariBuilder(forURL: self.options.termsOfServiceURL as URL, navigator: self.navigator))
+            let privacy = UIAlertAction(title: "Privacy Policy".i18n(key: "com.auth0.lock.database.tos.sheet.privacy", comment: "Privacy"), style: .default, handler: safariBuilder(forURL: self.options.privacyPolicyURL as URL, navigator: self.navigator))
             [cancel, tos, privacy].forEach { alert.addAction($0) }
             self.navigator.present(alert)
         }
@@ -204,34 +207,42 @@ class DatabasePresenter: Presentable, Loggable {
         self.messagePresenter?.hideCurrent()
 
         self.logger.verbose("new value: \(input.text) for type: \(input.type)")
-        let attribute: UserAttribute?
+        var updateHRD: Bool = false
+
+        // FIXME: enum mapping outlived its usefulness
+        let attribute: UserAttribute
         switch input.type {
         case .email:
             attribute = .email
+            updateHRD = true
         case .emailOrUsername:
             attribute = .emailOrUsername
+            updateHRD = true
         case .password:
-            attribute = .password(enforcePolicy: self.currentMode == .signup)
+            attribute = .password(enforcePolicy: self.currentScreen == .signup)
         case .username:
             attribute = .username
         case .custom(let name, _, _, _, _, _):
             attribute = .custom(name: name)
         default:
-            attribute = nil
+            return
         }
 
-        guard let attr = attribute else { return }
         do {
-            try self.authenticator.update(attr, value: input.text)
-            // Check for Entperise domain match in login view
-            if self.enterpriseInteractor?.matchDomain(input.text) != nil, let mode = self.databaseView?.switcher?.selected, mode == .login {
-                try self.enterpriseInteractor?.updateEmail(input.text)
-                self.logger.verbose("Enterprise connection detected: \(self.enterpriseInteractor?.connection)")
+            try self.authenticator.update(attribute, value: input.text)
+            input.showValid()
+
+            guard
+                    let mode = self.databaseView?.switcher?.selected,
+                    mode == .login && updateHRD
+                    else { return }
+            try? self.enterpriseInteractor?.updateEmail(input.text)
+            if let connection = self.enterpriseInteractor?.connection {
+                self.logger.verbose("Enterprise connection detected: \(connection)")
                 if self.databaseView?.ssoBar == nil { self.databaseView?.presentEnterprise() }
             } else {
                 self.databaseView?.removeEnterprise()
             }
-            input.showValid()
         } catch let error as InputValidationError {
             input.showError(error.localizedMessage(withConnection: self.database))
         } catch {

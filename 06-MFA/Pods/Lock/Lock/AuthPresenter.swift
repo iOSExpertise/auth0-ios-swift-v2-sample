@@ -31,8 +31,8 @@ class AuthPresenter: Presentable, Loggable {
 
     var messagePresenter: MessagePresenter?
 
-    init(connections: Connections, interactor: OAuth2Authenticatable, customStyle: [String: AuthStyle]) {
-        self.connections = connections.oauth2
+    init(connections: [OAuth2Connection], interactor: OAuth2Authenticatable, customStyle: [String: AuthStyle]) {
+        self.connections = connections
         self.interactor = interactor
         self.customStyle = customStyle
     }
@@ -43,7 +43,7 @@ class AuthPresenter: Presentable, Loggable {
 
     func newViewToEmbed(withInsets insets: UIEdgeInsets, isLogin: Bool = true) -> AuthCollectionView {
         let mode: AuthCollectionView.Mode
-        if (self.connections.count < compactModeThreshold) {
+        if self.connections.count < compactModeThreshold {
             mode = .expanded(isLogin: isLogin)
         } else {
             mode = .compact

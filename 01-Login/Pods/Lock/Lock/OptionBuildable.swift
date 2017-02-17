@@ -54,6 +54,9 @@ public protocol OptionBuildable: Options {
         /// What database modes are allowed and must be at least one. By default all modes are allowed.
     var allow: DatabaseMode { get set }
 
+        /// Should Lock close if only mode available. By default is true
+    var autoClose: Bool { get set }
+
         /// Initial screen displayed by Lock when a database connection is available. By default is Login
     var initialScreen: DatabaseScreen { get set }
 
@@ -87,6 +90,8 @@ internal extension OptionBuildable {
     func validate() -> UnrecoverableError? {
         guard !self.allow.isEmpty else { return UnrecoverableError.invalidOptions(cause: "Must allow at least one database mode") }
         guard !self.usernameStyle.isEmpty else { return UnrecoverableError.invalidOptions(cause: "Must specify at least one username style") }
+        guard self.allow.contains(.Login) || self.closable || self.autoClose else { return UnrecoverableError.invalidOptions(cause: "Must enable autoclose or enable closable") }
+        guard self.oidcConformant || self.audience == nil else { return UnrecoverableError.invalidOptions(cause: "Must set OIDC-Conformant flag in Lock to use audience option") }
         return nil
     }
 }
@@ -96,7 +101,7 @@ public extension OptionBuildable {
         /// ToS URL. By default is Auth0's
     var termsOfService: String {
         get {
-            return self.termsOfServiceURL.absoluteString // FIXME: Better handling
+            return self.termsOfServiceURL.absoluteString
         }
         set {
             guard let url = URL(string: newValue) else { return } // FIXME: log error
@@ -107,7 +112,7 @@ public extension OptionBuildable {
         /// Privacy Policy URL. By default is Auth0's
     var privacyPolicy: String {
         get {
-            return self.privacyPolicyURL.absoluteString // FIXME: Better handling
+            return self.privacyPolicyURL.absoluteString
         }
         set {
             guard let url = URL(string: newValue) else { return } // FIXME: log error

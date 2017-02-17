@@ -35,12 +35,12 @@ public protocol Options {
     var scope: String { get }
     var parameters: [String: Any] { get }
     var allow: DatabaseMode { get }
+    var autoClose: Bool { get }
     var initialScreen: DatabaseScreen { get }
     var usernameStyle: DatabaseIdentifierStyle { get }
     var customSignupFields: [CustomTextField] { get }
     var loginAfterSignup: Bool { get }
 
-    // Enterprise
     var activeDirectoryEmailAsUsername: Bool { get }
     var enterpriseConnectionUsingActiveAuth: [String] { get }
 

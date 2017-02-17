@@ -103,7 +103,7 @@ class DatabaseOnlyView: UIView, DatabaseView {
         form.identityField.returnKey = .next
         form.identityField.nextField = form.passwordField
         form.passwordField.returnKey = .done
-        primaryButton?.title = "Log in".i18n(key: "com.auth0.lock.submit.login.title", comment: "Login Button title")
+        primaryButton?.title = "LOG IN".i18n(key: "com.auth0.lock.submit.login.title", comment: "Login Button title")
         layoutInStack(form, authCollectionView: authCollectionView)
         self.layoutSecondaryButton(self.allowedModes.contains(.ResetPassword))
         self.form = form
@@ -120,7 +120,7 @@ class DatabaseOnlyView: UIView, DatabaseView {
         form.usernameField?.returnKey = .next
         form.usernameField?.nextField = form.passwordField
         form.passwordField.returnKey = .done
-        primaryButton?.title = "Sign up".i18n(key: "com.auth0.lock.submit.signup.title", comment: "Signup Button title")
+        primaryButton?.title = "SIGN UP".i18n(key: "com.auth0.lock.submit.signup.title", comment: "Signup Button title")
         layoutInStack(form, authCollectionView: authCollectionView)
         self.layoutSecondaryButton(true)
         self.form = form
@@ -134,7 +134,7 @@ class DatabaseOnlyView: UIView, DatabaseView {
             passwordPolicyView.isHidden = true
             form.passwordField.errorLabel?.removeFromSuperview()
             form.passwordField.onBeginEditing = { [weak self, weak passwordPolicyView] _ in
-                guard let view = passwordPolicyView else { return  }
+                guard let view = passwordPolicyView else { return }
                 Queue.main.async {
                     view.isHidden = false
                     self?.navigator?.scroll(toPosition: CGPoint(x: 0, y: view.intrinsicContentSize.height), animated: false)
@@ -142,7 +142,7 @@ class DatabaseOnlyView: UIView, DatabaseView {
             }
 
             form.passwordField.onEndEditing = { [weak passwordPolicyView] _ in
-                guard let view = passwordPolicyView else { return  }
+                guard let view = passwordPolicyView else { return }
                 view.isHidden = true
             }
         }
@@ -151,12 +151,10 @@ class DatabaseOnlyView: UIView, DatabaseView {
     func presentEnterprise() {
         guard let form = self.form as? CredentialView else { return }
 
-        let ssoBar = InfoBarView()
+        let ssoBar = InfoBarView.ssoInfoBar
         let viewCount = self.container?.subviews.count ?? 0
         let spacer = strutView(withHeight: 125 - CGFloat(viewCount) * 25)
 
-        ssoBar.title  = "SINGLE SIGN-ON ENABLED".i18n(key: "com.auth0.lock.enterprise.sso", comment: "SSO Header")
-        ssoBar.setIcon("ic_lock")
         ssoBar.isHidden = false
 
         self.container?.insertArrangedSubview(ssoBar, at: 0)

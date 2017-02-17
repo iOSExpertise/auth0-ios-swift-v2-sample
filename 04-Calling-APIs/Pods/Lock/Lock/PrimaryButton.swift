@@ -22,7 +22,7 @@
 
 import UIKit
 
-public class PrimaryButton: UIView {
+class PrimaryButton: UIView {
 
     weak var button: UIButton?
     weak var indicator: UIActivityIndicatorView?
@@ -57,16 +57,16 @@ public class PrimaryButton: UIView {
         }
     }
 
-    public convenience init() {
+    convenience init() {
         self.init(frame: CGRect.zero)
     }
 
-    required override public init(frame: CGRect) {
+    required override init(frame: CGRect) {
         super.init(frame: frame)
         self.layoutButton()
     }
 
-    public required init?(coder aDecoder: NSCoder) {
+    required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.layoutButton()
     }
@@ -103,7 +103,7 @@ public class PrimaryButton: UIView {
         button.setImage(nil, for: .disabled)
         button.setAttributedTitle(nil, for: .normal)
         button.setAttributedTitle(nil, for: .disabled)
-        guard let title = title?.uppercased(), !self.hideTitle else {
+        guard let title = title, !self.hideTitle else {
             button.setImage(image(named: "ic_submit", compatibleWithTraitCollection: self.traitCollection), for: UIControlState())
             button.setImage(UIImage(), for: .disabled)
             return
@@ -127,7 +127,7 @@ public class PrimaryButton: UIView {
         button.setAttributedTitle(NSAttributedString(), for: .disabled)
 }
 
-    public override var intrinsicContentSize : CGSize {
+    override var intrinsicContentSize: CGSize {
         return CGSize(width: UIViewNoIntrinsicMetric, height: 95)
     }
 
