@@ -37,7 +37,7 @@ class HomeViewController: UIViewController {
     // MARK: - IBAction
 
     @IBAction func showLoginController(_ sender: UIButton) {
-        self.checkAccessToken()
+        self.checkToken()
     }
 
     // MARK: - Private
@@ -46,14 +46,12 @@ class HomeViewController: UIViewController {
         Lock
             .classic()
             .withOptions {
-                // TODO Use OIDC once refreshToken fixed
-                $0.oidcConformant = false
-                $0.scope = "openid profile offline_access"
+                $0.scope = "openid offline_access"
                 $0.parameters = ["device":"UNIQUE_ID"]
             }
             .onAuth { credentials in
-                guard let accessToken = credentials.accessToken, let refreshToken = credentials.refreshToken else { return }
-                SessionManager.shared.storeTokens(accessToken, refreshToken: refreshToken)
+                guard let idToken = credentials.idToken, let refreshToken = credentials.refreshToken else { return }
+                SessionManager.shared.storeTokens(idToken, refreshToken: refreshToken)
                 SessionManager.shared.retrieveProfile { error in
                     DispatchQueue.main.async {
                         self.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
@@ -64,7 +62,7 @@ class HomeViewController: UIViewController {
             .present(from: self)
     }
 
-    fileprivate func checkAccessToken() {
+    fileprivate func checkToken() {
         let loadingAlert = UIAlertController.loadingAlert()
         loadingAlert.presentInViewController(self)
         SessionManager.shared.retrieveProfile { error in

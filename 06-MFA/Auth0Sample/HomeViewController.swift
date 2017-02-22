@@ -31,10 +31,6 @@ class HomeViewController: UIViewController {
     @IBAction func showLoginController(_ sender: UIButton) {
         Lock
             .classic()
-            .withOptions {
-                $0.oidcConformant = true
-                $0.scope = "openid profile"
-            }
             .onAuth { credentials in
                 guard let accessToken = credentials.accessToken else { return }
                 SessionManager.shared.storeToken(accessToken)

@@ -43,10 +43,6 @@ class HomeViewController: UIViewController {
     private func showLock() {
         Lock
             .classic()
-            .withOptions {
-                $0.oidcConformant = true
-                $0.scope = "openid profile"
-            }
             .onAuth { credentials in
                 guard let accessToken = credentials.accessToken, let idToken = credentials.idToken else { return }
                 SessionManager.shared.storeTokens(accessToken, idToken: idToken)

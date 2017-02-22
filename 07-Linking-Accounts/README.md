@@ -40,8 +40,6 @@ fileprivate func showLinkAccountDialog() {
         .classic()
         .withOptions {
             $0.closable = true
-            $0.oidcConformant = true
-            $0.scope = "openid profile"
         }
         .onAuth { credentials in
             guard let idToken = credentials.idToken else {
