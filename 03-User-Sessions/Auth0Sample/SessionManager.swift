@@ -26,7 +26,7 @@ import SimpleKeychain
 import Auth0
 
 enum SessionManagerError: Error {
-    case noAccessToken
+    case noIdToken
     case noRefreshToken
 }
 
@@ -37,24 +37,25 @@ class SessionManager {
 
     private init () { }
 
-    func storeTokens(_ accessToken: String, refreshToken: String? = nil) {
-        self.keychain.setString(accessToken, forKey: "access_token")
+    func storeTokens(_ idToken: String, refreshToken: String? = nil) {
+        self.keychain.setString(idToken, forKey: "id_token")
         if let refreshToken = refreshToken {
             self.keychain.setString(refreshToken, forKey: "refresh_token")
         }
     }
 
     func retrieveProfile(_ callback: @escaping (Error?) -> ()) {
-        guard let accessToken = self.keychain.string(forKey: "access_token") else {
-            return callback(SessionManagerError.noAccessToken)
+        guard let idToken = self.keychain.string(forKey: "id_token") else {
+            return callback(SessionManagerError.noIdToken)
         }
         Auth0
             .authentication()
-            .userInfo(token: accessToken)
+            .tokenInfo(token: idToken)
             .start { result in
                 switch(result) {
                 case .success(let profile):
                     self.profile = profile
+                     self.refreshToken(callback)
                     callback(nil)
                 case .failure(_):
                     self.refreshToken(callback)
@@ -68,15 +69,16 @@ class SessionManager {
         }
         Auth0
             .authentication()
-            .renew(withRefreshToken: refreshToken)
+            .delegation(withParameters: ["refresh_token": refreshToken])
             .start { result in
                 switch(result) {
                 case .success(let credentials):
-                    guard let accessToken = credentials.accessToken else { return }
-                    self.storeTokens(accessToken)
+                    guard let idToken = credentials["id_token"] as? String else { return }
+                    self.storeTokens(idToken)
                     self.retrieveProfile(callback)
                 case .failure(let error):
                     callback(error)
+                    self.logout()
                 }
         }
     }

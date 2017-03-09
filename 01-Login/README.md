@@ -14,9 +14,6 @@ In `HomeViewController.swift`:
 @IBAction func showLoginController(_ sender: UIButton) {
   Lock
       .classic()
-      .withOptions {
-          $0.oidcConformant = true
-      }
       .onAuth { credentials in
           guard let accessToken = credentials.accessToken else { return }
           self.showSuccessAlert(accessToken)

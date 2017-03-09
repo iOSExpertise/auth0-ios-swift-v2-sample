@@ -47,6 +47,10 @@ class ProfileViewController: UIViewController {
         task.resume()
     }
 
+    @IBAction func addMetaData() {
+        
+    }
+
     @IBAction func logout(_ sender: UIBarButtonItem) {
         SessionManager.shared.logout()
         self.presentingViewController?.dismiss(animated: true, completion: nil)

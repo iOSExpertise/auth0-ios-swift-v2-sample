@@ -18,7 +18,7 @@ fileprivate func performLogin() {
     self.loading = true
     Auth0
         .authentication()
-        .login(usernameOrEmail: self.emailTextField.text!, password: self.passwordTextField.text!, realm: "Username-Password-Authentication", scope: "openid profile")
+        .login(usernameOrEmail: self.emailTextField.text!, password: self.passwordTextField.text!, connection: "Username-Password-Authentication", scope: "openid profile")
         .start { result in
             DispatchQueue.main.async {
                 self.loading = false

@@ -31,9 +31,6 @@ class HomeViewController: UIViewController {
     @IBAction func showLoginController(_ sender: UIButton) {
         Lock
             .classic()
-            .withOptions {
-                $0.oidcConformant = true
-            }
             .withStyle {
                 $0.title = "Phantom Inc."
                 $0.headerBlur = .extraLight
