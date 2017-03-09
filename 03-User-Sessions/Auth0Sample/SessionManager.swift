@@ -55,7 +55,6 @@ class SessionManager {
                 switch(result) {
                 case .success(let profile):
                     self.profile = profile
-                     self.refreshToken(callback)
                     callback(nil)
                 case .failure(_):
                     self.refreshToken(callback)
