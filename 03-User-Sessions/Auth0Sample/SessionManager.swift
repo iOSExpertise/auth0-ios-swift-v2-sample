@@ -68,7 +68,9 @@ class SessionManager {
         }
         Auth0
             .authentication()
-            .delegation(withParameters: ["refresh_token": refreshToken])
+            .delegation(withParameters: ["refresh_token": refreshToken,
+                                         "scope": "openid email",
+                                         "api_type": "app"])
             .start { result in
                 switch(result) {
                 case .success(let credentials):

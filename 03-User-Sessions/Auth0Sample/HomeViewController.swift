@@ -46,7 +46,7 @@ class HomeViewController: UIViewController {
         Lock
             .classic()
             .withOptions {
-                $0.scope = "openid offline_access"
+                $0.scope = "openid email offline_access"
                 $0.parameters = ["device":"UNIQUE_ID"]
             }
             .onAuth { credentials in
