@@ -46,7 +46,7 @@ class HomeViewController: UIViewController {
         Lock
             .classic()
             .withOptions {
-                $0.scope = "openid offline_access"
+                $0.scope = "openid email offline_access"
                 $0.parameters = ["device":"UNIQUE_ID"]
             }
             .onAuth { credentials in
@@ -66,11 +66,13 @@ class HomeViewController: UIViewController {
         let loadingAlert = UIAlertController.loadingAlert()
         loadingAlert.presentInViewController(self)
         SessionManager.shared.retrieveProfile { error in
-            loadingAlert.dismiss(animated: true) {
-                guard error == nil else {
-                    return self.showLock()
+            DispatchQueue.main.async {
+                loadingAlert.dismiss(animated: true) {
+                    guard error == nil else {
+                        return self.showLock()
+                    }
+                    self.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
                 }
-                self.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
             }
         }
     }

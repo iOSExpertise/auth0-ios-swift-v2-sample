@@ -58,11 +58,13 @@ class UserIdentitiesViewController: UIViewController {
                 $0.closable = true
             }
             .onAuth { credentials in
-                guard let idToken = credentials.idToken else {
-                    self.showMissingProfileOrTokenAlert()
-                    return
+                DispatchQueue.main.async {
+                    guard let idToken = credentials.idToken else {
+                        self.showMissingProfileOrTokenAlert()
+                        return
+                    }
+                    self.linkAccountWithIDToken(idToken)
                 }
-                self.linkAccountWithIDToken(idToken)
             }
             .present(from: self)
     }
@@ -81,16 +83,18 @@ class UserIdentitiesViewController: UIViewController {
             .users(token: idToken)
             .link(self.userId, withOtherUserToken: otherUserToken)
             .start { result in
-                loadingAlert.dismiss() {
-                    switch result {
-                    case .success:
-                        let successAlert = UIAlertController.alertWithTitle(nil, message: "Successfully linked account!")
-                        successAlert.presentInViewController(self, dismissAfter: 1.0) { completion in
-                            self.updateIdentities()
+                DispatchQueue.main.async {
+                    loadingAlert.dismiss() {
+                        switch result {
+                        case .success:
+                            let successAlert = UIAlertController.alertWithTitle(nil, message: "Successfully linked account!")
+                            successAlert.presentInViewController(self, dismissAfter: 1.0) { completion in
+                                self.updateIdentities()
+                            }
+                        case .failure(let error):
+                            let failureAlert = UIAlertController.alertWithTitle("Error", message: error.localizedDescription, includeDoneButton: true)
+                            failureAlert.presentInViewController(self)
                         }
-                    case .failure(let error):
-                        let failureAlert = UIAlertController.alertWithTitle("Error", message: error.localizedDescription, includeDoneButton: true)
-                        failureAlert.presentInViewController(self)
                     }
                 }
         }
@@ -101,10 +105,12 @@ class UserIdentitiesViewController: UIViewController {
         let loadingAlert = UIAlertController.loadingAlert()
         loadingAlert.presentInViewController(self)
         SessionManager.shared.retrieveIdentity { error, identities in
-            loadingAlert.dismiss() {
-                guard error == nil else { return }
-                self.identities = identities
-                self.tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+            DispatchQueue.main.async {
+                loadingAlert.dismiss() {
+                    guard error == nil else { return }
+                    self.identities = identities
+                    self.tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+                }
             }
         }
     }
@@ -119,16 +125,18 @@ class UserIdentitiesViewController: UIViewController {
                 .users(token: idToken)
                 .unlink(identityId: identity.identifier, provider: identity.provider, fromUserId: self.userId)
                 .start { result in
-                    loadingAlert.dismiss() {
-                        switch result {
-                        case .success:
-                            let successAlert = UIAlertController.alertWithTitle(nil, message: "Account unlinked")
-                            successAlert.presentInViewController(self, dismissAfter: 1.0) { completion in
-                                self.updateIdentities()
+                    DispatchQueue.main.async {
+                        loadingAlert.dismiss() {
+                            switch result {
+                            case .success:
+                                let successAlert = UIAlertController.alertWithTitle(nil, message: "Account unlinked")
+                                successAlert.presentInViewController(self, dismissAfter: 1.0) { completion in
+                                    self.updateIdentities()
+                                }
+                            case .failure(let error):
+                                let failureAlert = UIAlertController.alertWithTitle("Error", message: error.localizedDescription, includeDoneButton: true)
+                                failureAlert.presentInViewController(self)
                             }
-                        case .failure(let error):
-                            let failureAlert = UIAlertController.alertWithTitle("Error", message: error.localizedDescription, includeDoneButton: true)
-                            failureAlert.presentInViewController(self)
                         }
                     }
             }
