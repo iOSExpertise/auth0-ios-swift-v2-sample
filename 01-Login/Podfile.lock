@@ -1,0 +1,19 @@
+PODS:
+  - Auth0 (1.3.0)
+  - Lock (2.1.0):
+    - Auth0 (~> 1.2)
+    - Lock/Classic (= 2.1.0)
+  - Lock/Classic (2.1.0):
+    - Auth0 (~> 1.2)
+
+DEPENDENCIES:
+  - Auth0 (~> 1.3)
+  - Lock (= 2.1)
+
+SPEC CHECKSUMS:
+  Auth0: 7a8e7b93510c12203bc25682fa6aa6a320f33398
+  Lock: 24eee3361ae50841b852d05ce8985c5b8040057f
+
+PODFILE CHECKSUM: 495d6432853fdb6d139aff212b5d45909acc49ad
+
+COCOAPODS: 1.2.0

@@ -1,0 +1,22 @@
+PODS:
+  - Auth0 (1.3.0)
+  - Lock (2.1.0):
+    - Auth0 (~> 1.2)
+    - Lock/Classic (= 2.1.0)
+  - Lock/Classic (2.1.0):
+    - Auth0 (~> 1.2)
+  - SimpleKeychain (0.7.0)
+
+DEPENDENCIES:
+  - Auth0 (~> 1.3)
+  - Lock (~> 2.1)
+  - SimpleKeychain (~> 0.7)
+
+SPEC CHECKSUMS:
+  Auth0: 7a8e7b93510c12203bc25682fa6aa6a320f33398
+  Lock: 24eee3361ae50841b852d05ce8985c5b8040057f
+  SimpleKeychain: b50cef3b87939d480ea1143425c00f5b4b70fe21
+
+PODFILE CHECKSUM: e9f9708d923647df9e416efde74c64396352d659
+
+COCOAPODS: 1.2.0
