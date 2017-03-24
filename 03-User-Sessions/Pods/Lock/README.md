@@ -29,7 +29,7 @@ Need help migrating from v1? Please check our [Migration Guide](MIGRATION.md)
  Add the following line to your Podfile:
 
  ```ruby
- pod "Lock", "~> 2.0.0"
+ pod "Lock", "~> 2.1.0"
  ```
 
 ### Carthage
@@ -246,6 +246,16 @@ Scope used for authentication. By default is `openid`. It will return not only t
 ```swift
 .withOptions {
   $0.scope = "openid name email picture"
+}
+```
+
+#### Connection Scope
+
+Allows you to set provider scopes for oauth2/social connections with a comma separated list. By default is empty.
+
+```swift
+.withOptions {
+  $0.connectionScope = ["facebook": "user_friends,email"]
 }
 ```
 

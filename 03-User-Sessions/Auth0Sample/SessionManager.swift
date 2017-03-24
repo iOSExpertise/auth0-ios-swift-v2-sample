@@ -68,7 +68,7 @@ class SessionManager {
         }
         Auth0
             .authentication()
-            .renew(withRefreshToken: refreshToken)
+            .renew(withRefreshToken: refreshToken, scope: "openid profile")
             .start { result in
                 switch(result) {
                 case .success(let credentials):

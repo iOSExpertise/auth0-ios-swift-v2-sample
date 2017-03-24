@@ -26,7 +26,7 @@ import Auth0
 /// Lock main class to configure and show the native widget
 public class Lock: NSObject {
 
-    static let sharedInstance = Lock()
+    static let shared = Lock()
 
     private(set) var authentication: Authentication
     private(set) var webAuth: WebAuth
@@ -38,6 +38,8 @@ public class Lock: NSObject {
     var options: Options { return self.optionsBuilder }
 
     var observerStore = ObserverStore()
+
+    var nativeHandlers: [String: AuthProvider] = [:]
 
     var style: Style = Style()
 
@@ -105,7 +107,7 @@ public class Lock: NSObject {
 
      - returns: Lock itself for chaining
      */
-    public func withConnections(_ closure: (inout ConnectionBuildable) -> ()) -> Lock {
+    public func withConnections(_ closure: (inout ConnectionBuildable) -> Void) -> Lock {
         var connections: ConnectionBuildable = OfflineConnections()
         closure(&connections)
         let allowed = self.connectionProvider.allowed
@@ -134,7 +136,7 @@ public class Lock: NSObject {
 
      - returns: Lock itself for chaining
      */
-    public func withOptions(_ closure: (inout OptionBuildable) -> ()) -> Lock {
+    public func withOptions(_ closure: (inout OptionBuildable) -> Void) -> Lock {
         var builder: OptionBuildable = self.optionsBuilder
         closure(&builder)
         self.optionsBuilder = builder
@@ -161,7 +163,7 @@ public class Lock: NSObject {
 
      - returns: Lock itself for chaining
      */
-    public func withStyle(_ closure: (inout Style) -> ()) -> Lock {
+    public func withStyle(_ closure: (inout Style) -> Void) -> Lock {
         var style = self.style
         closure(&style)
         self.style = style
@@ -175,7 +177,7 @@ public class Lock: NSObject {
 
      - returns: Lock itself for chaining
     */
-    public func onAuth(callback: @escaping (Credentials) -> ()) -> Lock {
+    public func onAuth(callback: @escaping (Credentials) -> Void) -> Lock {
         self.observerStore.onAuth = callback
         return self
     }
@@ -187,7 +189,7 @@ public class Lock: NSObject {
 
      - returns: Lock itself for chaining
      */
-    public func onError(callback: @escaping (Error) -> ()) -> Lock {
+    public func onError(callback: @escaping (Error) -> Void) -> Lock {
         self.observerStore.onFailure = callback
         return self
     }
@@ -199,7 +201,7 @@ public class Lock: NSObject {
 
      - returns: Lock itself for chaining
      */
-    public func onCancel(callback: @escaping () -> ()) -> Lock {
+    public func onCancel(callback: @escaping () -> Void) -> Lock {
         self.observerStore.onCancel = callback
         return self
     }
@@ -212,7 +214,7 @@ public class Lock: NSObject {
 
      - returns: Lock itself for chaining
     */
-    public func onSignUp(callback: @escaping (String, [String: Any]) -> ()) -> Lock {
+    public func onSignUp(callback: @escaping (String, [String: Any]) -> Void) -> Lock {
         self.observerStore.onSignUp = callback
         return self
     }
@@ -255,6 +257,20 @@ public class Lock: NSObject {
      */
     public static func resumeAuth(_ url: URL, options: [UIApplicationOpenURLOptionsKey: Any]) -> Bool {
         return Auth0.resumeAuth(url, options: options)
+    }
+
+    /**
+     Register an AuthProvider to be used for connection, e.g. When using native social integration plugins such as
+     Lock-Facebook to provide native authentication.
+
+     - parameter name: connection name that will use the specified auth provider
+     - parameter handler: the auth provider to use
+     
+     - returns: Lock itself for chaining
+     */
+    public func nativeAuthentication(forConnection name: String, handler: AuthProvider) -> Lock {
+        self.nativeHandlers[name] = handler
+        return self
     }
 }
 
